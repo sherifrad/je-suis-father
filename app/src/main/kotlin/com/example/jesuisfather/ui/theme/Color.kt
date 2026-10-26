@@ -27,11 +27,44 @@ val secondaryLight = Color(0xFF486271)
 val tertiaryLight = Color(0xFF613A73)
 
 
-//Dark Colors
+// Dark Colors
 val primaryDark = Color(0xFF87CFF9)
 val primaryContainerDark = Color(0xFF005C7D)
 val secondaryDark = Color(0xFFB0CADC)
 val tertiaryDark = Color(0xFFE6B5F8)
+
+// Dual-Persona Design Tokens (Je Suis Father)
+val KidsBackgroundSurface = Color(0xFFE3F2FD)
+val KidsCardBlue = Color(0xFF5C9CE6)
+val KidsCardAmber = Color(0xFFFFD54F)
+val KidsCardGreen = Color(0xFF66BB6A)
+val KidsCardPink = Color(0xFFEC407A)
+val KidsCardPurple = Color(0xFFAB47BC)
+val KidsCardOrange = Color(0xFFFFA726)
+
+val ParentBackgroundSurface = Color(0xFF12161F)
+val ParentCardSurface = Color(0xFF1E2430)
+val SurfaceDarkElevated = Color(0xFF1E293B)
+val DeviceOwnerActiveBadge = Color(0xFF4CAF50)
+val DeviceOwnerInactiveBadge = Color(0xFFFFB300)
+
+val TimeOutBackground = Color(0xFFFFF8E7)
+val TimeOutHeadingDark = Color(0xFF2D3748)
+val TimeOutBodyGrey = Color(0xFF718096)
+val PrimaryUnlockCTA = Color(0xFFE57373)
+
+val PrimaryBlue = Color(0xFF3B82F6)
+val AccentBlue = Color(0xFF60A5FA)
+val SuccessGreen = Color(0xFF10B981)
+val AuthErrorRed = Color(0xFFEF5350)
+val ExitKioskRed = Color(0xFFDC2626)
+val KeypadButtonBackground = Color(0xFF2A3342)
+val KeypadBorderGrey = Color(0xFF64748B)
+val SubtleTextGrey = Color(0xFF94A3B8)
+val SecondaryButtonBackground = Color(0xFF475569)
+val SwitchUncheckedTrack = Color(0xFF334155)
+val ParentLockOverlayBackground = Color(0x991E293B)
+
 
 //End - Partial Color List
 
