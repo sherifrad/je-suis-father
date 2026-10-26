@@ -6,7 +6,7 @@ plugins {
 
 android {
   namespace = "com.example.jesuisfather"
-  compileSdk = 35
+  compileSdk = 36
   defaultConfig {
     applicationId = "com.jesuisfather.app"
     minSdk = 24

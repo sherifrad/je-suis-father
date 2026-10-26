@@ -16,10 +16,12 @@ sealed interface PinVerificationResult {
 }
 
 class PinSecurityManager(
-    context: Context,
+    context: Context? = null,
     testPrefs: SharedPreferences? = null
 ) {
-    private val prefs: SharedPreferences = testPrefs ?: createEncryptedPreferences(context)
+    private val prefs: SharedPreferences = testPrefs ?: createEncryptedPreferences(
+        checkNotNull(context) { "Context must be provided when testPrefs is null" }
+    )
 
     companion object {
         const val PREFS_FILE_NAME = "jesuisfather_secure_prefs"
@@ -54,17 +56,17 @@ class PinSecurityManager(
         }
 
         fun encodeBase64(bytes: ByteArray): String {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return try {
                 java.util.Base64.getEncoder().encodeToString(bytes)
-            } else {
+            } catch (_: Throwable) {
                 android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
             }
         }
 
         fun decodeBase64(str: String): ByteArray {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return try {
                 java.util.Base64.getDecoder().decode(str)
-            } else {
+            } catch (_: Throwable) {
                 android.util.Base64.decode(str, android.util.Base64.NO_WRAP)
             }
         }

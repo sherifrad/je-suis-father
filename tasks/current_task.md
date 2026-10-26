@@ -18,7 +18,7 @@
 - [x] **TASK-101**: Update dependencies in `gradle/libs.versions.toml` & `app/build.gradle.kts` (Security Crypto, Biometric, Android 35 SDK alignment).
 - [x] **TASK-102**: Implement `PinSecurityManager.kt` using `MasterKey` + PBKDF2WithHmacSHA256 (16-byte salt, 10k iterations, 5-attempt lockout).
 - [x] **TASK-103**: Implement `BiometricAuthHelper.kt` with clean BiometricPrompt wrapper and PIN fallback.
-- [ ] **TASK-104**: Unit tests for PIN hashing, salt generation, verification, and brute-force lockout (`PinSecurityManagerTest.kt`).
+- [x] **TASK-104**: Unit tests for PIN hashing, salt generation, verification, and brute-force lockout (`PinSecurityManagerTest.kt` passed all 6/6 tests in 0.19s).
 
 ### Phase 3: Data Layer & Application Package Discovery (Milestone 2)
 - [ ] **TASK-201**: Define Room Database entities (`AllowedAppEntity`, `UsageSessionEntity`) and `AppWhitelistDao`.

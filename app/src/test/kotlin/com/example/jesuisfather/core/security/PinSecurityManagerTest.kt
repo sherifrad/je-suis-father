@@ -17,13 +17,7 @@ class PinSecurityManagerTest {
     @Before
     fun setup() {
         fakePrefs = FakeSharedPreferences()
-        // Provide a dummy Context using dynamic proxy since testPrefs is supplied
-        val dummyContext = Proxy.newProxyInstance(
-            Context::class.java.classLoader,
-            arrayOf(Context::class.java)
-        ) { _, _, _ -> null } as Context
-
-        pinSecurityManager = PinSecurityManager(dummyContext, fakePrefs)
+        pinSecurityManager = PinSecurityManager(testPrefs = fakePrefs)
     }
 
     @Test
