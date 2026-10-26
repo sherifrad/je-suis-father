@@ -6,11 +6,11 @@ plugins {
 
 android {
   namespace = "com.example.jesuisfather"
-  compileSdk = 37
+  compileSdk = 35
   defaultConfig {
     applicationId = "com.jesuisfather.app"
     minSdk = 24
-    targetSdk = 37
+    targetSdk = 35
     versionCode = 1
     versionName = "1.0"
   }
@@ -81,4 +81,8 @@ dependencies {
   implementation(libs.androidx.navigation3.ui)
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+
+  // Security Crypto & Biometrics
+  implementation(libs.androidx.security.crypto)
+  implementation(libs.androidx.biometric)
 }

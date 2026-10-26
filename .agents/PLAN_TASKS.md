@@ -15,10 +15,10 @@
 - [ ] **TASK-004**: Phase 1.5 Visual Mockup & Design Approval Gate (`.agents/mocks/je_suis_father_mock.html`).
 
 ### Phase 2: Security & Cryptographic Core (Milestone 1)
-- [ ] **TASK-101**: Update dependencies in `gradle/libs.versions.toml` & `app/build.gradle.kts` (Room, KSP, Security Crypto, Biometric, Lifecycle).
-- [ ] **TASK-102**: Implement `PinSecurityManager.kt` using `MasterKey` + PBKDF2WithHmacSHA256 (16-byte salt, 10k iterations, 5-attempt lockout).
-- [ ] **TASK-103**: Implement `BiometricAuthHelper.kt` with clean BiometricPrompt wrapper and PIN fallback.
-- [ ] **TASK-104**: Unit tests for PIN hashing, salt generation, verification, and brute-force lockout.
+- [x] **TASK-101**: Update dependencies in `gradle/libs.versions.toml` & `app/build.gradle.kts` (Security Crypto, Biometric, Android 35 SDK alignment).
+- [x] **TASK-102**: Implement `PinSecurityManager.kt` using `MasterKey` + PBKDF2WithHmacSHA256 (16-byte salt, 10k iterations, 5-attempt lockout).
+- [x] **TASK-103**: Implement `BiometricAuthHelper.kt` with clean BiometricPrompt wrapper and PIN fallback.
+- [ ] **TASK-104**: Unit tests for PIN hashing, salt generation, verification, and brute-force lockout (`PinSecurityManagerTest.kt`).
 
 ### Phase 3: Data Layer & Application Package Discovery (Milestone 2)
 - [ ] **TASK-201**: Define Room Database entities (`AllowedAppEntity`, `UsageSessionEntity`) and `AppWhitelistDao`.
