@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import com.example.jesuisfather.core.admin.LockTaskController
 import com.example.jesuisfather.core.admin.ProtectionMode
+import com.example.jesuisfather.core.guard.JeSuisFatherAccessibilityService
+import com.example.jesuisfather.core.guard.SystemPermissionHelper
 import com.example.jesuisfather.core.security.BiometricAuthHelper
 import com.example.jesuisfather.core.security.PinSecurityManager
 import com.example.jesuisfather.core.security.PinVerificationResult
@@ -118,9 +120,11 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-                // Start or pause session timer based on screen
-                LaunchedEffect(currentScreen) {
+                // Start or pause session timer and guards based on screen
+                LaunchedEffect(currentScreen, whitelistedApps) {
                     if (currentScreen == ScreenState.KIDS_SANDBOX) {
+                        JeSuisFatherAccessibilityService.isKidsModeActive = true
+                        JeSuisFatherAccessibilityService.allowedPackages = whitelistedApps.map { it.packageName }.toSet()
                         sessionTimer.startTimer()
                         ImmersiveModeHelper.enterImmersiveMode(window)
                         val packages = whitelistedApps.map { it.packageName }
@@ -129,6 +133,7 @@ class MainActivity : FragmentActivity() {
                         }
                         lockTaskController.startKiosk(this@MainActivity)
                     } else {
+                        JeSuisFatherAccessibilityService.isKidsModeActive = false
                         sessionTimer.pauseTimer()
                         ImmersiveModeHelper.exitImmersiveMode(window)
                     }

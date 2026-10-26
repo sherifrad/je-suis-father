@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Je Suis Father</string>
+    <string name="accessibility_service_desc">Protects your child by preventing unauthorized notification shade drag-downs and blocking unapproved applications.</string>
 </resources>

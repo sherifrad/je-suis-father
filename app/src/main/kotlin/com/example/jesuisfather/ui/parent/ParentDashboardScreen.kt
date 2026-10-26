@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.jesuisfather.core.admin.ProtectionMode
+import com.example.jesuisfather.core.guard.SystemPermissionHelper
 import com.example.jesuisfather.data.model.AllowedApp
 import com.example.jesuisfather.ui.theme.AccentBlue
 import com.example.jesuisfather.ui.theme.DeviceOwnerActiveBadge
@@ -81,6 +82,16 @@ fun ParentDashboardScreen(
 ) {
     val context = LocalContext.current
     val adbCommand = "adb shell dpm set-device-owner com.jesuisfather.app/com.example.jesuisfather.core.admin.JeSuisFatherAdminReceiver"
+
+    var hasAccessibility by remember { mutableStateOf(SystemPermissionHelper.isAccessibilityServiceEnabled(context)) }
+    var hasOverlay by remember { mutableStateOf(SystemPermissionHelper.hasOverlayPermission(context)) }
+    var hasUsageAccess by remember { mutableStateOf(SystemPermissionHelper.hasUsageStatsPermission(context)) }
+
+    fun refreshShieldStatus() {
+        hasAccessibility = SystemPermissionHelper.isAccessibilityServiceEnabled(context)
+        hasOverlay = SystemPermissionHelper.hasOverlayPermission(context)
+        hasUsageAccess = SystemPermissionHelper.hasUsageStatsPermission(context)
+    }
 
     var searchQuery by remember { mutableStateOf("") }
     var currentLimit by remember { mutableFloatStateOf(dailyLimitMinutes.toFloat()) }
@@ -244,25 +255,76 @@ fun ParentDashboardScreen(
 
                         // Contextual Details & Actions
                         if (protectionMode == ProtectionMode.STANDARD) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Status: Protected via Home App",
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = DeviceOwnerActiveBadge,
-                                    fontSize = 12.sp
-                                )
-                                Button(
-                                    onClick = {
-                                        context.startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = SecondaryButtonBackground),
-                                    shape = RoundedCornerShape(8.dp)
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Home Settings", fontSize = 11.sp)
+                                    Text(
+                                        text = "On-Device Shield (No PC Needed)",
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        fontSize = 13.sp
+                                    )
+                                    Button(
+                                        onClick = {
+                                            refreshShieldStatus()
+                                            Toast.makeText(context, "Shield permissions refreshed", Toast.LENGTH_SHORT).show()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = SecondaryButtonBackground),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("🔄 Refresh", fontSize = 11.sp)
+                                    }
+                                }
+
+                                // 1. Accessibility Guard
+                                ShieldPermissionRow(
+                                    title = "Accessibility Guard (Shade Blocker)",
+                                    description = "Instantly collapses notification pull-down & blocks phone settings.",
+                                    isGranted = hasAccessibility,
+                                    onEnable = { SystemPermissionHelper.openAccessibilitySettings(context) }
+                                )
+
+                                // 2. Display Over Other Apps
+                                ShieldPermissionRow(
+                                    title = "Display Over Other Apps (Overlay)",
+                                    description = "Displays full-screen time-out lock over other applications.",
+                                    isGranted = hasOverlay,
+                                    onEnable = { SystemPermissionHelper.openOverlaySettings(context) }
+                                )
+
+                                // 3. Usage Stats Access
+                                ShieldPermissionRow(
+                                    title = "Usage Access (Session Monitor)",
+                                    description = "Tracks foreground app duration accurately and securely.",
+                                    isGranted = hasUsageAccess,
+                                    onEnable = { SystemPermissionHelper.openUsageAccessSettings(context) }
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Default Launcher Protection",
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = DeviceOwnerActiveBadge,
+                                        fontSize = 12.sp
+                                    )
+                                    Button(
+                                        onClick = {
+                                            context.startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = SecondaryButtonBackground),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Home Settings", fontSize = 11.sp)
+                                    }
                                 }
                             }
                         } else {
@@ -464,6 +526,60 @@ fun ParentDashboardScreen(
                     Text("Exit to Android Home", fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShieldPermissionRow(
+    title: String,
+    description: String,
+    isGranted: Boolean,
+    onEnable: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = SurfaceDarkElevated,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (isGranted) "✅" else "⚠️",
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isGranted) DeviceOwnerActiveBadge else DeviceOwnerInactiveBadge,
+                        fontSize = 12.sp
+                    )
+                }
+                Text(
+                    text = description,
+                    color = SubtleTextGrey,
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp
+                )
+            }
+            if (!isGranted) {
+                Spacer(modifier = Modifier.padding(start = 8.dp))
+                Button(
+                    onClick = onEnable,
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text("Enable", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
