@@ -27,10 +27,10 @@
 - [x] **TASK-204**: Unit & deterministic tests for App Repository and Whitelist DAO (`AppRepositoryTest.kt` passed with 3/3 tests green).
 
 ### Phase 4: Kiosk Lockdown Engine & System Receivers (Milestone 3)
-- [ ] **TASK-301**: Create `res/xml/device_admin_sample.xml` and register `JeSuisFatherAdminReceiver` in `AndroidManifest.xml`.
-- [ ] **TASK-302**: Implement `LockTaskController.kt` for ADB Device Owner management (`setLockTaskPackages`, `LOCK_TASK_FEATURE_NONE`, `startLockTask`, `stopLockTask`).
-- [ ] **TASK-303**: Implement `BootReceiver.kt` for `ACTION_BOOT_COMPLETED` and `ACTION_LOCKED_BOOT_COMPLETED` auto-recovery.
-- [ ] **TASK-304**: Implement `ImmersiveModeHelper.kt` for system bar suppression on Honor MagicOS / Android devices.
+- [x] **TASK-301**: Create `res/xml/device_admin_sample.xml` and register `JeSuisFatherAdminReceiver` in `AndroidManifest.xml`.
+- [x] **TASK-302**: Implement `LockTaskController.kt` for ADB Device Owner management (`setLockTaskPackages`, `LOCK_TASK_FEATURE_NONE`, `startLockTask`, `stopLockTask`).
+- [x] **TASK-303**: Implement `BootReceiver.kt` for `ACTION_BOOT_COMPLETED` and `ACTION_LOCKED_BOOT_COMPLETED` auto-recovery.
+- [x] **TASK-304**: Implement `ImmersiveModeHelper.kt` for system bar suppression on Honor MagicOS / Android devices.
 
 ### Phase 5: Dual-Persona Jetpack Compose UI (Milestone 4)
 - [ ] **TASK-401**: Design theme tokens (`Theme.kt`, `Color.kt`, `Type.kt`) for Child Sandbox (Soft Sky Blue) and Parent Console (Dark Slate).
