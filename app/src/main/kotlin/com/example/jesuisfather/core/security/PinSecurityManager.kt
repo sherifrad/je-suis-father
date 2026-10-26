@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.example.jesuisfather.core.admin.ProtectionMode
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
@@ -29,6 +30,7 @@ class PinSecurityManager(
         const val KEY_PIN_SALT = "pin_salt"
         const val KEY_FAILED_ATTEMPTS = "failed_attempts"
         const val KEY_LOCKOUT_UNTIL_MS = "lockout_until_ms"
+        const val KEY_PROTECTION_MODE = "protection_mode"
 
         const val MAX_FAILED_ATTEMPTS = 5
         const val LOCKOUT_DURATION_MS = 5 * 60 * 1000L // 5 minutes
@@ -139,6 +141,21 @@ class PinSecurityManager(
         prefs.edit()
             .putInt(KEY_FAILED_ATTEMPTS, 0)
             .putLong(KEY_LOCKOUT_UNTIL_MS, 0L)
+            .apply()
+    }
+
+    fun getProtectionMode(): ProtectionMode {
+        val modeStr = prefs.getString(KEY_PROTECTION_MODE, ProtectionMode.STANDARD.name)
+        return try {
+            ProtectionMode.valueOf(modeStr ?: ProtectionMode.STANDARD.name)
+        } catch (_: Exception) {
+            ProtectionMode.STANDARD
+        }
+    }
+
+    fun setProtectionMode(mode: ProtectionMode) {
+        prefs.edit()
+            .putString(KEY_PROTECTION_MODE, mode.name)
             .apply()
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import com.example.jesuisfather.core.admin.LockTaskController
+import com.example.jesuisfather.core.admin.ProtectionMode
 import com.example.jesuisfather.core.security.BiometricAuthHelper
 import com.example.jesuisfather.core.security.PinSecurityManager
 import com.example.jesuisfather.core.security.PinVerificationResult
@@ -75,6 +76,13 @@ class MainActivity : FragmentActivity() {
                 var pinErrorMessage by remember { mutableStateOf<String?>(null) }
                 var lockoutSeconds by remember { mutableIntStateOf(0) }
 
+                var currentProtectionMode by remember {
+                    mutableStateOf(pinManager.getProtectionMode())
+                }
+                var isDeviceOwnerState by remember {
+                    mutableStateOf(lockTaskController.isDeviceOwner)
+                }
+
                 val allApps by appRepository.observeAllApps().collectAsState(initial = emptyList())
                 val whitelistedApps by appRepository.observeWhitelistedApps().collectAsState(initial = emptyList())
                 val remainingMinutes by sessionTimer.remainingMinutes.collectAsState()
@@ -116,7 +124,9 @@ class MainActivity : FragmentActivity() {
                         sessionTimer.startTimer()
                         ImmersiveModeHelper.enterImmersiveMode(window)
                         val packages = whitelistedApps.map { it.packageName }
-                        lockTaskController.setupKioskPolicies(packages)
+                        if (currentProtectionMode == ProtectionMode.ENTERPRISE && lockTaskController.isDeviceOwner) {
+                            lockTaskController.setupKioskPolicies(packages)
+                        }
                         lockTaskController.startKiosk(this@MainActivity)
                     } else {
                         sessionTimer.pauseTimer()
@@ -173,9 +183,17 @@ class MainActivity : FragmentActivity() {
 
                         ScreenState.PARENT_DASHBOARD -> {
                             ParentDashboardScreen(
-                                isDeviceOwner = lockTaskController.isDeviceOwner,
+                                isDeviceOwner = isDeviceOwnerState,
                                 allApps = allApps,
                                 dailyLimitMinutes = 90,
+                                protectionMode = currentProtectionMode,
+                                onProtectionModeChanged = { newMode ->
+                                    currentProtectionMode = newMode
+                                    pinManager.setProtectionMode(newMode)
+                                },
+                                onCheckDeviceOwnerStatus = {
+                                    isDeviceOwnerState = lockTaskController.isDeviceOwner
+                                },
                                 onToggleApp = { packageName, isEnabled ->
                                     scope.launch {
                                         appRepository.setAppEnabled(packageName, isEnabled)
