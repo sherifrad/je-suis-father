@@ -2,6 +2,7 @@ package com.example.jesuisfather.ui.parent
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
@@ -42,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,10 +52,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.jesuisfather.core.admin.JeSuisFatherAdminReceiver
 import com.example.jesuisfather.core.admin.ProtectionMode
 import com.example.jesuisfather.core.guard.SystemPermissionHelper
+import com.example.jesuisfather.core.shizuku.ShizukuManager
 import com.example.jesuisfather.data.model.AllowedApp
 import com.example.jesuisfather.ui.theme.AccentBlue
+import com.example.jesuisfather.ui.theme.AuthErrorRed
 import com.example.jesuisfather.ui.theme.DeviceOwnerActiveBadge
 import com.example.jesuisfather.ui.theme.DeviceOwnerInactiveBadge
 import com.example.jesuisfather.ui.theme.ExitKioskRed
@@ -63,8 +68,10 @@ import com.example.jesuisfather.ui.theme.ParentCardSurface
 import com.example.jesuisfather.ui.theme.PrimaryBlue
 import com.example.jesuisfather.ui.theme.SecondaryButtonBackground
 import com.example.jesuisfather.ui.theme.SubtleTextGrey
+import com.example.jesuisfather.ui.theme.SuccessGreen
 import com.example.jesuisfather.ui.theme.SurfaceDarkElevated
 import com.example.jesuisfather.ui.theme.SwitchUncheckedTrack
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,16 +88,27 @@ fun ParentDashboardScreen(
     onExitKiosk: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val adbCommand = "adb shell dpm set-device-owner com.jesuisfather.app/com.example.jesuisfather.core.admin.JeSuisFatherAdminReceiver"
 
     var hasAccessibility by remember { mutableStateOf(SystemPermissionHelper.isAccessibilityServiceEnabled(context)) }
     var hasOverlay by remember { mutableStateOf(SystemPermissionHelper.hasOverlayPermission(context)) }
     var hasUsageAccess by remember { mutableStateOf(SystemPermissionHelper.hasUsageStatsPermission(context)) }
 
+    var isShizukuAvailable by remember { mutableStateOf(ShizukuManager.isShizukuAvailable()) }
+    var isShizukuGranted by remember { mutableStateOf(ShizukuManager.isPermissionGranted()) }
+    var shizukuStatusMessage by remember { mutableStateOf<String?>(null) }
+    var isExecutingShizuku by remember { mutableStateOf(false) }
+
     fun refreshShieldStatus() {
         hasAccessibility = SystemPermissionHelper.isAccessibilityServiceEnabled(context)
         hasOverlay = SystemPermissionHelper.hasOverlayPermission(context)
         hasUsageAccess = SystemPermissionHelper.hasUsageStatsPermission(context)
+    }
+
+    fun refreshShizukuStatus() {
+        isShizukuAvailable = ShizukuManager.isShizukuAvailable()
+        isShizukuGranted = ShizukuManager.isPermissionGranted()
     }
 
     var searchQuery by remember { mutableStateOf("") }
@@ -357,9 +375,132 @@ fun ParentDashboardScreen(
                                 }
 
                                 if (!isDeviceOwner) {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    // Method 1: On-Device Shizuku 1-Click
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = SurfaceDarkElevated,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Column(modifier = Modifier.padding(12.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = "⚡ Shizuku On-Device Setup",
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White,
+                                                    fontSize = 13.sp
+                                                )
+                                                Text(
+                                                    text = if (isShizukuAvailable) {
+                                                        if (isShizukuGranted) "Granted ✅" else "Available ⚠️"
+                                                    } else {
+                                                        "Not Running ❌"
+                                                    },
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = if (isShizukuGranted) DeviceOwnerActiveBadge else DeviceOwnerInactiveBadge,
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = if (isShizukuAvailable) {
+                                                    if (isShizukuGranted) {
+                                                        "Shizuku service is connected! Tap below to activate Device Owner directly on this device without a computer."
+                                                    } else {
+                                                        "Shizuku detected. Grant permission to run the Device Owner command on-device."
+                                                    }
+                                                } else {
+                                                    "Shizuku is not running on this phone. Start the Shizuku app, or use USB ADB below."
+                                                },
+                                                color = SubtleTextGrey,
+                                                fontSize = 11.sp,
+                                                lineHeight = 15.sp
+                                            )
+
+                                            if (shizukuStatusMessage != null) {
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Text(
+                                                    text = shizukuStatusMessage!!,
+                                                    color = if (isDeviceOwner) DeviceOwnerActiveBadge else AuthErrorRed,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                if (isShizukuAvailable && !isShizukuGranted) {
+                                                    Button(
+                                                        onClick = {
+                                                            ShizukuManager.requestPermission()
+                                                            refreshShizukuStatus()
+                                                        },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text("🔑 Grant Permission", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                    }
+                                                } else if (isShizukuAvailable && isShizukuGranted) {
+                                                    Button(
+                                                        onClick = {
+                                                            scope.launch {
+                                                                isExecutingShizuku = true
+                                                                val adminComp = ComponentName(context, JeSuisFatherAdminReceiver::class.java)
+                                                                val res = ShizukuManager.setDeviceOwner(adminComp)
+                                                                isExecutingShizuku = false
+                                                                if (res.isSuccess) {
+                                                                    shizukuStatusMessage = "Success! Device Owner active."
+                                                                    onCheckDeviceOwnerStatus()
+                                                                } else {
+                                                                    val err = res.error.ifBlank { res.output }
+                                                                    shizukuStatusMessage = if (err.contains("already several users", ignoreCase = true)) {
+                                                                        "Failed: Android cannot set Device Owner because multiple users (e.g. App Twin / Guest) exist on device."
+                                                                    } else {
+                                                                        "Result: $err"
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        enabled = !isExecutingShizuku,
+                                                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text(if (isExecutingShizuku) "Running..." else "⚡ Activate Device Owner", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                    }
+                                                }
+
+                                                Button(
+                                                    onClick = {
+                                                        refreshShizukuStatus()
+                                                        onCheckDeviceOwnerStatus()
+                                                        Toast.makeText(context, "Status refreshed", Toast.LENGTH_SHORT).show()
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = SecondaryButtonBackground),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                ) {
+                                                    Text("🔄 Refresh", fontSize = 11.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    // Method 2: USB ADB Terminal Command
                                     Text(
-                                        text = "Run this command on your computer via USB:",
+                                        text = "Or run via USB ADB on PC:",
                                         color = SubtleTextGrey,
                                         fontSize = 11.sp
                                     )

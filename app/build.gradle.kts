@@ -85,4 +85,8 @@ dependencies {
   // Security Crypto & Biometrics
   implementation(libs.androidx.security.crypto)
   implementation(libs.androidx.biometric)
+
+  // Shizuku On-Device ADB Privileges
+  implementation(libs.shizuku.api)
+  implementation(libs.shizuku.provider)
 }
