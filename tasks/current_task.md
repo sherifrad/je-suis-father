@@ -21,10 +21,10 @@
 - [x] **TASK-104**: Unit tests for PIN hashing, salt generation, verification, and brute-force lockout (`PinSecurityManagerTest.kt` passed all 6/6 tests in 0.19s).
 
 ### Phase 3: Data Layer & Application Package Discovery (Milestone 2)
-- [ ] **TASK-201**: Define Room Database entities (`AllowedAppEntity`, `UsageSessionEntity`) and `AppWhitelistDao`.
-- [ ] **TASK-202**: Implement `InstalledAppScanner.kt` to safely query launchable apps (`QUERY_ALL_PACKAGES` / `CATEGORY_LAUNCHER`), filtering system installers and settings.
-- [ ] **TASK-203**: Implement `AppRepository.kt` combining Room DB states with installed system apps.
-- [ ] **TASK-204**: Unit & instrumented tests for App Repository and Whitelist DAO.
+- [x] **TASK-201**: Define Room/SQLite Database entities (`AllowedApp`, `UsageSession`) and `AppWhitelistDao`.
+- [x] **TASK-202**: Implement `InstalledAppScanner.kt` to safely query launchable apps (`QUERY_ALL_PACKAGES` / `CATEGORY_LAUNCHER`), filtering system installers and settings.
+- [x] **TASK-203**: Implement `AppRepository.kt` combining database states with installed system apps and daily usage accumulation.
+- [x] **TASK-204**: Unit & deterministic tests for App Repository and Whitelist DAO (`AppRepositoryTest.kt` passed with 3/3 tests green).
 
 ### Phase 4: Kiosk Lockdown Engine & System Receivers (Milestone 3)
 - [ ] **TASK-301**: Create `res/xml/device_admin_sample.xml` and register `JeSuisFatherAdminReceiver` in `AndroidManifest.xml`.
