@@ -1,0 +1,515 @@
+﻿Technical Specification: Android Kids Sandbox Launcher ("KidVault")
+Document Version: 1.0.0 | Target Platform: Android 10.0+ (API 29–35), optimized for Honor MagicOS / EMUI & AOSP | Architecture Pattern: Clean Architecture + MVVM + Android Jetpack | Language: Kotlin (100%)
+|---|---|Structure](https://docs.google.com/document/d/1cmff3iZ3Bur32fRh_SC7JdJc0INaoGxFYP84abT_2I0/edit)
+1. Executive Summary & Core Objectives
+1.1 Purpose
+Modern Android skins (such as Honor's MagicOS on smartphones like the Honor 400) omit dedicated tablet sandbox applications like "Kids Corner." KidVault is an offline-first, tamper-resistant Android application designed to convert any standard smartphone into a child-safe sandbox environment.
+1.2 Key Objectives
+* Strict Containment: Prevent children from navigating outside approved apps, pulling down the notification shade, accessing system settings, or making in-app purchases.
+* Selective Whitelisting: Allow parents to curate a custom catalog of installed applications exposed to the child.
+* Session & Time Governance: Enforce configurable daily time allowances and scheduled bedtimes with full-screen lockout.
+* Zero Root Enterprise Kiosk (via ADB): Leverage Android’s native Device Policy Manager (LockTask) via ADB-granted Device Owner privileges for system-level lockdown without rooting the device.
+* Privacy & Offline First: Zero external analytics, cloud dependencies, or tracking. All state resides locally encrypted on the device.
+2. System Architecture & Module Structure
+app/
+
+
+├── src/main/
+
+
+│   ├── java/com/example/kidvault/
+
+
+│   │   ├── core/
+
+
+│   │   │   ├── admin/          # DeviceAdminReceiver & DevicePolicyManager wrapper
+
+
+│   │   │   ├── security/       # Cryptography, PIN hashing (PBKDF2), Biometrics
+
+
+│   │   │   └── timer/          # Session timers, usage monitoring & lockout service
+
+
+│   │   ├── data/
+
+
+│   │   │   ├── local/          # Room DB (Allowed apps, usage stats) & EncryptedPreferences
+
+
+│   │   │   └── repository/     # AppRepository, SettingsRepository
+
+
+│   │   ├── domain/
+
+
+│   │   │   ├── model/          # AllowedApp, ParentalConfig, SessionState
+
+
+│   │   │   └── usecase/        # LaunchAppUseCase, ToggleAppUseCase, ValidatePinUseCase
+
+
+│   │   └── presentation/
+
+
+│   │       ├── kids/           # Kids Launcher Home UI (Jetpack Compose)
+
+
+│   │       ├── parent/         # Parental Settings, App Picker, Time Limits
+
+
+│   │       ├── auth/           # PIN Pad & Biometric Auth Dialogs
+
+
+│   │       └── lock/           # Time Expired / Lockout Fullscreen Screen
+
+
+│   ├── res/
+
+
+│   │   ├── xml/                # device_admin_sample.xml
+
+
+│   └── AndroidManifest.xml
+3. Core Functional Requirements
+3.1 Custom Home Launcher (CATEGORY_HOME)
+* Registers as an Android Home/Launcher application.
+* Pressing the physical or gesture Home button redirects to KidVault’s child dashboard.
+* Validates default launcher status on every resume; if revoked, prompts the parent to reinstate it.
+3.2 App Whitelisting & Sandboxed Launcher Grid
+* Queries user-facing launchable activities via PackageManager.queryIntentActivities().
+* Parents select allowed apps from a searchable list in the protected Parent Dashboard.
+* Renders a distraction-free grid containing only approved app icons, battery status, and remaining play time.
+* Intercepts external intents so whitelisted games cannot open browsers or the Google Play Store.
+3.3 Lockdown Engine & Kiosk Mode (LockTask)
+* Standard Mode (Non-Admin): Calls Activity.startLockTask() to pin the screen.
+* Enterprise Kiosk Mode (ADB Device Owner): Designated as Device Owner via dpm set-device-owner, granting silent LockTask execution via DevicePolicyManager.setLockTaskPackages() and LOCK_TASK_FEATURE_NONE to disable the notification shade, quick settings tiles, power menu options, and recent apps overview.
+3.4 Parental Authentication Gate
+* Requires a 4-digit PIN or biometric fingerprint to access Parent Settings or exit Kiosk mode.
+* Salted and hashed using PBKDF2 (PBKDF2WithHmacSHA256) stored in EncryptedSharedPreferences.
+* Brute-force protection locks the keypad for 5 minutes after 5 failed attempts.
+3.5 Time Limits & Bedtime Scheduling
+* Configurable daily session allowance (15m to 4h) and bedtime curfew window (20:00 to 07:00).
+* Foreground/background countdown timer monitors active screen time and displays a non-dismissible "Play Time is Over!" screen upon expiration.
+4. Technical Specifications & Permissions
+4.1 Android Manifest Configuration (AndroidManifest.xml)
+l<?xml version="1.0" encoding="utf-8"?><uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+
+<uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
+
+<uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+
+<application
+
+
+    android:name=".KidVaultApp"
+
+
+    android:allowBackup="false"
+
+
+    android:label="KidVault"
+
+
+    android:supportsRtl="true"
+
+
+    android:theme="@style/Theme.KidVault">
+
+
+    <activity
+
+
+        android:name=".presentation.kids.KidsLauncherActivity"
+
+
+        android:launchMode="singleTask"
+
+
+        android:clearTaskOnLaunch="true"
+
+
+        android:stateNotNeeded="true"
+
+
+        android:exported="true">
+
+
+        <intent-filter>
+
+
+            <action android:name="android.intent.action.MAIN" />
+
+
+            <category android:name="android.intent.category.HOME" />
+
+
+            <category android:name="android.intent.category.DEFAULT" />
+
+
+        </intent-filter>
+
+
+    </activity>
+
+
+    <activity
+
+
+        android:name=".presentation.parent.ParentSettingsActivity"
+
+
+        android:exported="false"
+
+
+        android:screenOrientation="portrait" />
+
+
+    <receiver
+
+
+        android:name=".core.admin.KidVaultAdminReceiver"
+
+
+        android:permission="android.permission.BIND_DEVICE_ADMIN"
+
+
+        android:exported="true">
+
+
+        <meta-data
+
+
+            android:name="android.app.device_admin"
+
+
+            android:resource="@xml/device_admin_sample" />
+
+
+        <intent-filter>
+
+
+            <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+
+
+        </intent-filter>
+
+
+    </receiver>
+
+
+    <receiver
+
+
+        android:name=".core.receiver.BootReceiver"
+
+
+        android:exported="true">
+
+
+        <intent-filter>
+
+
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
+
+
+        </intent-filter>
+
+
+    </receiver>
+
+
+</application>
+
+
+</manifest>
+```
+4.2 Device Admin Policy Metadata (res/xml/device_admin_sample.xml)
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <uses-policies>
+
+
+        <limit-password />
+
+
+        <watch-login />
+
+
+        <reset-password />
+
+
+        <force-lock />
+
+
+        <wipe-data />
+
+
+        <expire-password />
+
+
+        <encrypted-storage />
+
+
+        <disable-keyguard-features />
+
+
+    </uses-policies>
+
+
+</device-admin>
+5. Core Implementation Classes
+5.1 Device Owner & Lock Task Controller (LockTaskController.kt)
+package com.example.kidvault.core.admin
+
+
+import android.app.Activity
+
+
+import android.app.admin.DevicePolicyManager
+
+
+import android.content.ComponentName
+
+
+import android.content.Context
+
+
+import android.os.Build
+
+
+class LockTaskController(private val context: Context) {
+
+
+    private val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+
+
+    val adminComponent = ComponentName(context, KidVaultAdminReceiver::class.java)
+
+
+    val isDeviceOwner: Boolean
+
+
+        get() = dpm.isDeviceOwnerApp(context.packageName)
+
+
+    fun setupKioskPolicies(whitelistedPackages: List<String>) {
+
+
+        if (!isDeviceOwner) return
+
+
+        val packagesToLock = (whitelistedPackages + context.packageName).toTypedArray()
+
+
+        dpm.setLockTaskPackages(adminComponent, packagesToLock)
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+
+
+            dpm.setLockTaskFeatures(adminComponent, DevicePolicyManager.LOCK_TASK_FEATURE_NONE)
+
+
+        }
+
+
+    }
+
+
+    fun startKiosk(activity: Activity) {
+
+
+        activity.startLockTask()
+
+
+    }
+
+
+    fun stopKiosk(activity: Activity) {
+
+
+        try {
+
+
+            activity.stopLockTask()
+
+
+        } catch (e: Exception) {
+
+
+            e.printStackTrace()
+
+
+        }
+
+
+    }
+
+
+}
+5.2 Parental PIN Security Service (PinSecurityManager.kt)
+package com.example.kidvault.core.security
+
+
+import android.content.Context
+
+
+import androidx.security.crypto.EncryptedSharedPreferences
+
+
+import androidx.security.crypto.MasterKeys
+
+
+import java.security.SecureRandom
+
+
+import javax.crypto.SecretKeyFactory
+
+
+import javax.crypto.spec.PBEKeySpec
+
+
+import android.util.Base64
+
+
+class PinSecurityManager(context: Context) {
+
+
+    private val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+
+
+    private val prefs = EncryptedSharedPreferences.create(
+
+
+        "kidvault_secure_prefs",
+
+
+        masterKeyAlias,
+
+
+        context,
+
+
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+
+
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+
+
+    )
+
+
+    fun setPin(pin: String) {
+
+
+        val salt = ByteArray(16).apply { SecureRandom().nextBytes(this) }
+
+
+        val hash = hashPin(pin.toCharArray(), salt)
+
+
+        prefs.edit()
+
+
+            .putString(KEY_PIN_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
+
+
+            .putString(KEY_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
+
+
+            .apply()
+
+
+    }
+
+
+    fun verifyPin(enteredPin: String): Boolean {
+
+
+        val storedHash = prefs.getString(KEY_PIN_HASH, null) ?: return false
+
+
+        val storedSalt = prefs.getString(KEY_SALT, null) ?: return false
+
+
+        val saltBytes = Base64.decode(storedSalt, Base64.NO_WRAP)
+
+
+        val computedHash = hashPin(enteredPin.toCharArray(), saltBytes)
+
+
+        return storedHash == Base64.encodeToString(computedHash, Base64.NO_WRAP)
+
+
+    }
+
+
+    private fun hashPin(pin: CharArray, salt: ByteArray): ByteArray {
+
+
+        val spec = PBEKeySpec(pin, salt, 10000, 256)
+
+
+        return SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded
+
+
+    }
+
+
+    companion object {
+
+
+        private const val KEY_PIN_HASH = "pin_hash"
+
+
+        private const val KEY_SALT = "pin_salt"
+
+
+    }
+
+
+}
+6. Data Storage & Schema (Room DB)
+* AllowedApp Entity (allowed_apps): packageName: String (PK), appName: String, isEnabled: Boolean, maxDailyMinutes: Int, iconCachePath: String?
+* UsageSession Entity (usage_sessions): id: Long (PK), packageName: String, dateEpochDay: Long, durationSeconds: Long
+7. ADB Provisioning & Safe Uninstallation
+* Grant Device Owner:
+adb shell dpm set-device-owner com.example.kidvault/.core.admin.KidVaultAdminReceiver
+* Verify Device Owner:
+adb shell dumpsys device_policy | grep "Device Owner"
+* Remove Device Owner via ADB:
+adb shell dpm remove-active-admin com.example.kidvault/.core.admin.KidVaultAdminReceiver
+8. Threat Modeling & Edge Case Matrix
+Threat / Escape Vector
+	Vulnerability Description
+	Mitigation Strategy
+	Notification Shade Pull
+	Child drags down top shade to access System Settings or toggles off Wi-Fi/Bluetooth.
+	Enforce LOCK_TASK_FEATURE_NONE via DevicePolicyManager.setLockTaskFeatures(). Disables status bar expansion entirely.
+	Device Reboot Bypass
+	Child force-reboots the device hoping default launcher resets or app fails to boot.
+	Register BootReceiver for ACTION_BOOT_COMPLETED. Automatically relaunch KidsLauncherActivity and trigger startLockTask() immediately on system start.
+	Ad / Browser Deep Linking
+	Whitelisted games launch embedded web views or external browser links via hyperlinked ads.
+	Intercept external URL intents within custom package manager filter. Block launch of non-whitelisted browser packages; force activity stay within locked task stack.
+	Emergency Dialing
+	Accessing lock screen / phone dialer via SOS shortcuts.
+	Configure DevicePolicyManager to restrict system dialer usage except for hardcoded emergency numbers (911/112), preventing general outbound dialing.
+	Incoming Phone Calls
+	Full-screen incoming call activity breaks out of current locked app context.
+	Override standard overlay behaviors using SYSTEM_ALERT_WINDOW or force call handling UI to stay embedded without granting access to native call logs/contacts.

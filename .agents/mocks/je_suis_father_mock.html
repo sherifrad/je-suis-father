@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Je Suis Father - Phase 1.5 Visual Mockup & Design Matrix</title>
+  <style>
+    :root {
+      --kids-bg: #E3F2FD;
+      --kids-card-blue: #5C9CE6;
+      --kids-card-amber: #FFD54F;
+      --kids-card-green: #66BB6A;
+      --kids-card-pink: #EC407A;
+      --kids-card-purple: #AB47BC;
+      --kids-card-orange: #FFA726;
+      --parent-bg: #12161F;
+      --parent-surface: #1E2430;
+      --parent-text: #F1F5F9;
+      --parent-muted: #94A3B8;
+      --badge-green: #2E7D32;
+      --badge-green-bg: #E8F5E9;
+      --badge-amber: #F57F17;
+      --badge-amber-bg: #FFFDE7;
+      --timeout-bg: #FFF8E7;
+      --timeout-coral: #E57373;
+      --font-scale: 1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: #0B0F17;
+      color: #E2E8F0;
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      max-width: 1200px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 24px;
+      background: #1E2430;
+      border-radius: 16px;
+      border: 1px solid #334155;
+    }
+
+    h1 {
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #3B82F6;
+      color: #FFF;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      background: #334155;
+      color: #FFF;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #475569;
+    }
+
+    .btn.active {
+      background: #3B82F6;
+      color: #FFF;
+    }
+
+    .main-stage {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      justify-content: center;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    /* Device Preview Frames */
+    .device-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .device-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94A3B8;
+      text-transform: uppercase;
+    }
+
+    .phone-frame {
+      width: 360px;
+      height: 740px;
+      border-radius: 36px;
+      border: 8px solid #334155;
+      background: var(--kids-bg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tablet-frame {
+      width: 680px;
+      height: 740px;
+      border-radius: 28px;
+      border: 8px solid #334155;
+      background: var(--kids-bg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* System Status Bar */
+    .status-bar {
+      height: 28px;
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1E293B;
+      z-index: 10;
+    }
+
+    .parent-mode .status-bar {
+      color: #F8FAFC;
+    }
+
+    /* Persona Screens */
+    .screen-container {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .screen-container.visible {
+      display: flex;
+    }
+
+    /* 1. Kids Launcher Persona */
+    .kids-screen {
+      background: var(--kids-bg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .kids-header-pill {
+      align-self: center;
+      background: #FFFFFF;
+      padding: 10px 24px;
+      border-radius: 30px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .pill-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1E293B;
+    }
+
+    .kids-app-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      flex: 1;
+    }
+
+    .tablet-frame .kids-app-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .app-card {
+      height: 140px;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      transition: transform 0.15s ease;
+      color: #FFFFFF;
+      text-decoration: none;
+    }
+
+    .app-card:active {
+      transform: scale(0.96);
+    }
+
+    .app-icon {
+      font-size: 44px;
+    }
+
+    .app-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+
+    .lock-fab {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(30, 41, 59, 0.45);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    [dir="rtl"] .lock-fab {
+      right: auto;
+      left: 20px;
+    }
+
+    .lock-fab:hover {
+      background: rgba(30, 41, 59, 0.8);
+      transform: scale(1.05);
+    }
+
+    /* 2. Parent PIN Auth Modal */
+    .pin-auth-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      z-index: 50;
+    }
+
+    .pin-sheet {
+      background: #1E2430;
+      border-top-left-radius: 32px;
+      border-top-right-radius: 32px;
+      padding: 28px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+      border-top: 1px solid #334155;
+    }
+
+    .pin-header {
+      font-size: 18px;
+      font-weight: 700;
+      color: #F8FAFC;
+      margin-bottom: 20px;
+    }
+
+    .pin-dots {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .pin-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #64748B;
+      transition: all 0.2s;
+    }
+
+    .pin-dot.filled {
+      background: #3B82F6;
+      border-color: #3B82F6;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+
+    .keypad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      width: 100%;
+      max-width: 280px;
+    }
+
+    .keypad-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #2A3342;
+      border: none;
+      color: #F8FAFC;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      transition: background 0.15s;
+    }
+
+    .keypad-btn:active {
+      background: #3B82F6;
+    }
+
+    .keypad-action {
+      font-size: 18px;
+      color: #94A3B8;
+    }
+
+    /* 3. Parent Dashboard Persona */
+    .parent-screen {
+      background: var(--parent-bg);
+      color: var(--parent-text);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .parent-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .device-owner-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(46, 125, 50, 0.15);
+      border: 1px solid rgba(46, 125, 50, 0.4);
+      color: #81C784;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .parent-card {
+      background: var(--parent-surface);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #2A3342;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .app-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #2A3342;
+    }
+
+    .app-toggle-row:last-child {
+      border-bottom: none;
+    }
+
+    .toggle-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .switch {
+      width: 44px;
+      height: 24px;
+      background: #3B82F6;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 20px;
+      height: 20px;
+      background: #FFF;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    [dir="rtl"] .switch::after {
+      right: auto;
+      left: 2px;
+    }
+
+    .switch.off {
+      background: #475569;
+    }
+
+    .switch.off::after {
+      transform: translateX(-20px);
+    }
+
+    [dir="rtl"] .switch.off::after {
+      transform: translateX(20px);
+    }
+
+    /* 4. Play Time Over Lockout Persona */
+    .timeout-screen {
+      background: var(--timeout-bg);
+      color: #3E2723;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100%;
+    }
+
+    .timeout-illustration {
+      font-size: 72px;
+      margin-bottom: 16px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .timeout-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #2D3748;
+      margin-bottom: 8px;
+    }
+
+    .timeout-subtitle {
+      font-size: 15px;
+      color: #718096;
+      margin-bottom: 32px;
+      max-width: 260px;
+      line-height: 1.4;
+    }
+
+    .parent-unlock-pill {
+      background: var(--timeout-coral);
+      color: #FFF;
+      border: none;
+      padding: 14px 36px;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(229, 115, 115, 0.4);
+    }
+
+    /* 5-State Indicators & Mocks */
+    .state-banner {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .state-banner.error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #F87171;
+    }
+
+    .state-banner.loading {
+      background: #EFF6FF;
+      color: #1E40AF;
+      border: 1px solid #93C5FD;
+    }
+
+    .state-banner.empty {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FCD34D;
+    }
+
+    /* 200% Font Scale simulation */
+    .font-scale-200 {
+      font-size: 1.3em !important;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>Je Suis Father <span class="badge">Phase 1.5 Visual Approval Gate</span></h1>
+      <p style="font-size: 13px; color: #94A3B8; margin-top: 4px;">
+        Dual-Persona Architecture (Child Sandbox vs Parent Console) &amp; 5-State Verification Matrix
+      </p>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn active" onclick="setScreen('kids')">1. Kids Sandbox</button>
+      <button class="btn" onclick="setScreen('pin')">2. PIN Auth Modal</button>
+      <button class="btn" onclick="setScreen('parent')">3. Parent Console</button>
+      <button class="btn" onclick="setScreen('timeout')">4. Lockout Screen</button>
+
+      <span style="color: #475569;">|</span>
+
+      <button class="btn" id="langBtn" onclick="toggleLanguage()">Language: English (LTR)</button>
+      <button class="btn" id="stateBtn" onclick="cycleState()">State: Normal</button>
+    </div>
+  </header>
+
+  <div class="main-stage">
+    <!-- 360dp Phone Viewport -->
+    <div class="device-wrapper">
+      <div class="device-title">Phone Frame (360dp x 740dp)</div>
+      <div class="phone-frame" id="phoneContainer">
+        
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <span id="clockDisplay">10:00</span>
+          <span>● 85% ⚡</span>
+        </div>
+
+        <!-- State Feedback Banner -->
+        <div id="stateBanner" class="state-banner"></div>
+
+        <!-- Screen 1: Kids Launcher Screen -->
+        <div id="kidsScreen" class="screen-container kids-screen visible">
+          <div class="kids-header-pill">
+            <div class="pill-item">
+              <span>⏳</span>
+              <span id="timeRemainingText">Remaining: 45m</span>
+            </div>
+          </div>
+
+          <div class="kids-app-grid" id="kidsAppGrid">
+            <div class="app-card" style="background: var(--kids-card-blue);">
+              <div class="app-icon">🎮</div>
+              <div class="app-title" data-en="Games" data-ar="ألعاب">Games</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-amber);">
+              <div class="app-icon">📚</div>
+              <div class="app-title" data-en="Learning" data-ar="تعليم">Learning</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-green);">
+              <div class="app-icon">🎨</div>
+              <div class="app-title" data-en="Drawing" data-ar="رسم">Drawing</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-pink);">
+              <div class="app-icon">🎵</div>
+              <div class="app-title" data-en="Music" data-ar="موسيقى">Music</div>
+            </div>
+          </div>
+
+          <div class="lock-fab" title="Hold 2s for Parent Mode" onclick="setScreen('pin')">
+            🔒
+          </div>
+        </div>
+
+        <!-- Screen 2: Parental PIN Bottom Sheet Modal -->
+        <div id="pinScreen" class="screen-container pin-auth-modal">
+          <div class="pin-sheet">
+            <div class="pin-header" data-en="Parental Access" data-ar="دخول الوالدين">Parental Access</div>
+            <div class="pin-dots">
+              <div class="pin-dot filled"></div>
+              <div class="pin-dot filled"></div>
+              <div class="pin-dot"></div>
+              <div class="pin-dot"></div>
+            </div>
+            <div class="keypad-grid">
+              <button class="keypad-btn">1</button>
+              <button class="keypad-btn">2</button>
+              <button class="keypad-btn">3</button>
+              <button class="keypad-btn">4</button>
+              <button class="keypad-btn">5</button>
+              <button class="keypad-btn">6</button>
+              <button class="keypad-btn">7</button>
+              <button class="keypad-btn">8</button>
+              <button class="keypad-btn">9</button>
+              <button class="keypad-btn keypad-action">⌫</button>
+              <button class="keypad-btn">0</button>
+              <button class="keypad-btn keypad-action">👆</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 3: Parent Dashboard -->
+        <div id="parentScreen" class="screen-container parent-screen">
+          <div class="parent-topbar">
+            <h2 style="font-size: 18px; font-weight: 700;" data-en="Parent Dashboard" data-ar="لوحة تحكم الوالدين">Parent Dashboard</h2>
+            <button class="btn" style="padding: 4px 8px; font-size: 11px;" onclick="setScreen('kids')" data-en="Lock" data-ar="قفل">Lock</button>
+          </div>
+
+          <div class="device-owner-badge">
+            <span>🛡️</span>
+            <div>
+              <div style="font-weight: 700;" data-en="ADB Device Owner: Active" data-ar="وضع مالك الجهاز ADB: نشط">ADB Device Owner: Active</div>
+              <div style="font-size: 11px; opacity: 0.8;" data-en="Kiosk Mode Enforced (Notification pull blocked)" data-ar="وضع الكشك مفعل (سحب الإشعارات مقيد)">Kiosk Mode Enforced (Notification pull blocked)</div>
+            </div>
+          </div>
+
+          <div class="parent-card">
+            <div class="card-title" data-en="Whitelisted Applications" data-ar="التطبيقات المصرح بها">Whitelisted Applications</div>
+            <div class="app-toggle-row">
+              <div class="toggle-info">
+                <span>🎮</span>
+                <span data-en="Kid Games" data-ar="ألعاب الأطفال">Kid Games</span>
+              </div>
+              <div class="switch"></div>
+            </div>
+            <div class="app-toggle-row">
+              <div class="toggle-info">
+                <span>📚</span>
+                <span data-en="Math &amp; Reading" data-ar="الرياضيات والقراءة">Math &amp; Reading</span>
+              </div>
+              <div class="switch"></div>
+            </div>
+            <div class="app-toggle-row">
+              <div class="toggle-info">
+                <span>🌐</span>
+                <span data-en="Browser" data-ar="المتصفح">Browser</span>
+              </div>
+              <div class="switch off"></div>
+            </div>
+          </div>
+
+          <div class="parent-card">
+            <div class="card-title" data-en="Session &amp; Time Limits" data-ar="حدود الوقت والجلسات">Session &amp; Time Limits</div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+              <span data-en="Daily Allowance" data-ar="الوقت اليومي">Daily Allowance</span>
+              <strong style="color: #60A5FA;">1h 30m</strong>
+            </div>
+            <input type="range" min="15" max="240" value="90" style="width: 100%;">
+          </div>
+        </div>
+
+        <!-- Screen 4: Play Time Over Screen -->
+        <div id="timeoutScreen" class="screen-container timeout-screen">
+          <div class="timeout-illustration">😴⏰</div>
+          <div class="timeout-title" data-en="Play Time is Over!" data-ar="انتهى وقت اللعب!">Play Time is Over!</div>
+          <div class="timeout-subtitle" data-en="Time to rest or ask a parent for more screen time." data-ar="حان وقت الراحة أو اطلب من والديك وقتاً إضافياً.">Time to rest or ask a parent for more screen time.</div>
+          <button class="parent-unlock-pill" onclick="setScreen('pin')" data-en="Parent Unlock" data-ar="إلغاء قفل الوالدين">Parent Unlock</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 840dp Tablet Viewport -->
+    <div class="device-wrapper">
+      <div class="device-title">Tablet Frame (840dp x 740dp)</div>
+      <div class="tablet-frame" id="tabletContainer">
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <span>10:00</span>
+          <span>Je Suis Father Tablet Viewport ● 92% ⚡</span>
+        </div>
+
+        <div class="kids-screen" style="height: 100%;">
+          <div class="kids-header-pill">
+            <div class="pill-item">
+              <span>⏳</span>
+              <span>Remaining: 45m</span>
+            </div>
+          </div>
+
+          <div class="kids-app-grid">
+            <div class="app-card" style="background: var(--kids-card-blue);">
+              <div class="app-icon">🎮</div>
+              <div class="app-title">Games</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-amber);">
+              <div class="app-icon">📚</div>
+              <div class="app-title">Learning</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-green);">
+              <div class="app-icon">🎨</div>
+              <div class="app-title">Drawing</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-pink);">
+              <div class="app-icon">🎵</div>
+              <div class="app-title">Music</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-purple);">
+              <div class="app-icon">📷</div>
+              <div class="app-title">Camera</div>
+            </div>
+            <div class="app-card" style="background: var(--kids-card-orange);">
+              <div class="app-icon">📖</div>
+              <div class="app-title">Books</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentLang = 'en';
+    let currentStateIdx = 0;
+    const states = ['Normal', 'Empty Whitelist (empty)', 'Loading / Scanning (loading)', 'Error / Lockout (error_or_alert)', '200% Font Scale (font_scale_or_overflow)'];
+
+    function setScreen(screenName) {
+      document.querySelectorAll('.screen-container').forEach(el => el.classList.remove('visible'));
+      document.querySelectorAll('.toolbar .btn').forEach(b => {
+        if (b.innerText.toLowerCase().includes(screenName)) b.classList.add('active');
+        else if (!b.id) b.classList.remove('active');
+      });
+
+      if (screenName === 'kids') document.getElementById('kidsScreen').classList.add('visible');
+      if (screenName === 'pin') document.getElementById('pinScreen').classList.add('visible');
+      if (screenName === 'parent') document.getElementById('parentScreen').classList.add('visible');
+      if (screenName === 'timeout') document.getElementById('timeoutScreen').classList.add('visible');
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      const isRtl = currentLang === 'ar';
+      document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+      document.documentElement.lang = currentLang;
+
+      document.getElementById('langBtn').innerText = isRtl ? 'Language: العربية (RTL)' : 'Language: English (LTR)';
+
+      document.querySelectorAll('[data-en]').forEach(el => {
+        el.innerText = isRtl ? el.getAttribute('data-ar') : el.getAttribute('data-en');
+      });
+    }
+
+    function cycleState() {
+      currentStateIdx = (currentStateIdx + 1) % states.length;
+      const stateName = states[currentStateIdx];
+      document.getElementById('stateBtn').innerText = `State: ${stateName}`;
+
+      const banner = document.getElementById('stateBanner');
+      const kidsGrid = document.getElementById('kidsAppGrid');
+      const phoneContainer = document.getElementById('phoneContainer');
+
+      banner.style.display = 'none';
+      banner.className = 'state-banner';
+      kidsGrid.style.display = 'grid';
+      phoneContainer.classList.remove('font-scale-200');
+
+      if (stateName.includes('Empty')) {
+        banner.style.display = 'block';
+        banner.className = 'state-banner empty';
+        banner.innerText = currentLang === 'ar' ? 'لا توجد تطبيقات مصرح بها. يرجى مراجعة لوحة تحكم الوالدين.' : 'No whitelisted apps configured. Open Parent Dashboard to allow apps.';
+        kidsGrid.style.display = 'none';
+      } else if (stateName.includes('Loading')) {
+        banner.style.display = 'block';
+        banner.className = 'state-banner loading';
+        banner.innerText = currentLang === 'ar' ? 'جاري فحص التطبيقات المثبتة...' : 'Loading installed applications (Scanning packages)...';
+      } else if (stateName.includes('Error')) {
+        banner.style.display = 'block';
+        banner.className = 'state-banner error';
+        banner.innerText = currentLang === 'ar' ? 'خطأ: تم قفل لوحة الأرقام لمدة 5 دقائق بعد 5 محاولات خاطئة.' : 'Alert: Too many failed PIN attempts. Keypad locked for 5:00.';
+      } else if (stateName.includes('Font Scale')) {
+        phoneContainer.classList.add('font-scale-200');
+      }
+    }
+  </script>
+</body>
+</html>

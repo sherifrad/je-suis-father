@@ -1,0 +1,193 @@
+﻿KidVault: UI/UX Wireframing & Design Specification
+Document Version: 1.0.0 | Phase: 2 (UI/UX & Interaction Architecture) | Target Stack: Jetpack Compose + Material 3 | Target Device: Honor 400 (MagicOS / Android 10–15)
+1. Dual-Persona Design Overview
+KidVault uses a Dual-Persona Design Architecture that separates the child-facing sandbox from the parent-facing administration console using distinct visual languages:
+* Child Sandbox Persona: High-contrast pastel palette, oversized 96dp touch targets, rounded iconography, minimal text, and edge-to-edge immersive mode so young children can navigate intuitively without reading complex menus.
+* Parent Admin Persona: Clean Material 3 Dark-Slate console with clear system status badges, toggle lists, and time sliders so parents immediately recognize when administrative controls are unlocked.
+2. Screen-by-Screen Wireframe & Interaction Specifications
+Screen ID & Name
+	Layout & Core UI Components
+	Primary User Interactions
+	Anti-Tamper UX Safeguards
+	Screen 0:
+Onboarding & Provisioning Wizard
+(OnboardingScreen)
+	3-step HorizontalPager:
+• Step 1: Create 4-Digit Parental PIN + Confirm PIN
+• Step 2: Initial App Whitelist Checklist
+• Step 3: Set Default Home Launcher CTA + ADB Device Owner Status Indicator
+	Tapping "Set Default Home" fires Intent(Settings.ACTION_HOME_SETTINGS); tapping "Finish & Lock" starts LockTaskMode.
+	"Finish & Lock" button remains disabled until a valid 4-digit PIN is saved and at least 1 child app is whitelisted.
+	Screen 1:
+Kids Home Launcher
+(KidsLauncherScreen)
+	Top floating status pill displaying Remaining Play Time: 45m and battery percentage; 2-column LazyVerticalGrid of oversized rounded app cards (96dp icon + 18sp label); subtle bottom-right Lock Floating Action Button (40dp, 60% opacity).
+	Single tap on any app card launches the whitelisted package via PackageManager.getLaunchIntentForPackage(); 2-second long-press on the bottom-right lock icon opens the Parental PIN Modal.
+	Single taps on the lock icon are ignored (shows a subtle "Hold for 2 seconds for Parent Mode" tooltip) to prevent accidental triggers by children. System status and navigation bars are hidden via WindowInsetsControllerCompat.
+	Screen 2:
+Parental PIN Authentication Modal
+(PinAuthBottomSheet)
+	Modal bottom sheet with blurred background scrim; "Parental Access" header; 4-dot PIN entry indicator; 3x4 circular numeric keypad (0–9, Back/Clear, and Biometric Fingerprint icon).
+	Typing the 4th digit automatically triggers PBKDF2 hash verification without needing an Enter button; tapping the fingerprint icon invokes BiometricPrompt.
+	Auto-dismisses after 10 seconds of inactivity. Horizontal shake animation + haptic error vibration on wrong PIN. Locks keypad for 5 minutes with a visible countdown timer after 5 consecutive failed attempts.
+	Screen 3:
+Parent Dashboard
+(ParentDashboardScreen)
+	Dark-slate Material 3 scaffold; Top App Bar with title and Settings gear; prominent ADB Device Owner Status Card (Active green badge or Standard Pinning amber badge); Whitelisted Apps card with search bar and Material 3 Switch toggles; Daily Screen Time Limit slider (15m to 4h in 15m increments) + Bedtime Window picker; bottom bar with Return to Kids Mode and Exit to Honor Home actions.
+	Toggling any app switch updates Room DB and immediately refreshes DevicePolicyManager.setLockTaskPackages(); tapping "Exit to Honor Home" calls stopLockTask() and opens the launcher chooser.
+	Idle timeout monitor automatically closes the Parent Dashboard and re-engages KidsLauncherScreen if the screen turns off or receives no touch input for 60 seconds.
+	Screen 4:
+Play Time Over Lockout
+(TimeOutLockScreen)
+	Fullscreen warm-cream (#FFF8E7) non-dismissible activity/overlay; friendly sleeping bear & clock illustration; "Play Time is Over!" headline (28sp bold); "Time to rest or ask a parent for more time" subtitle; coral Parent Unlock pill button.
+	Tapping "Parent Unlock" opens the PinAuthBottomSheet with quick actions: +15 Min Bonus, +30 Min Bonus, Open Parent Dashboard, or Exit KidVault.
+	Overrides OnBackPressedCallback (consumes all back presses) and immediately brings KidsLauncherActivity to the foreground when the session timer hits 00:00, terminating the active game task.
+	3. Structural Wireframe Layouts
+3.1 Kids Home Launcher (KidsLauncherScreen)
++---------------------------------------+
+|  [ Remaining Play Time: 45m ]   [85%] |
+|                                       |
+|  +---------------+  +---------------+ |
+|  |   [Icon 56dp] |  |   [Icon 56dp] | |
+|  |     Games     |  |     Learn     | |
+|  +---------------+  +---------------+ |
+|                                       |
+|  +---------------+  +---------------+ |
+|  |   [Icon 56dp] |  |   [Icon 56dp] | |
+|  |     Draw      |  |     Music     | |
+|  +---------------+  +---------------+ |
+|                                       |
+|  +---------------+  +---------------+ |
+|  |   [Icon 56dp] |  |   [Icon 56dp] | |
+|  |    Camera     |  |     Books     | |
+|  +---------------+  +---------------+ |
+|                                       |
+|                                 (Lock)|
++---------------------------------------+
+3.2 Parental PIN Modal (PinAuthBottomSheet)
++---------------------------------------+
+|         (Blurred Kids Screen)         |
++---------------------------------------+
+|            Parental Access            |
+|              (o) (o) (_) (_)          |
+|                                       |
+|          ( 1 )   ( 2 )   ( 3 )        |
+|          ( 4 )   ( 5 )   ( 6 )        |
+|          ( 7 )   ( 8 )   ( 9 )        |
+|          [Back]  ( 0 )   [Bio]        |
++---------------------------------------+
+3.3 Parent Dashboard (ParentDashboardScreen)
++---------------------------------------+
+| Parent Dashboard                  [*] |
+|---------------------------------------|
+| [ADB Device Owner: ● Active]          |
+|---------------------------------------|
+| Whitelisted Apps                      |
+| [Search installed apps...           ] |
+|  [Icon] Games                   (ON)  |
+|  [Icon] Learn                   (ON)  |
+|  [Icon] Draw                   (OFF)  |
+|  [Icon] Music                  (OFF)  |
+|---------------------------------------|
+| Daily Screen Time Limit: 2h 00m       |
+|  |---------O------------------|       |
+| Bedtime Lock: 20:00 – 07:00     (ON)  |
+|---------------------------------------|
+| [Lock & Return]   [Exit to Honor UI]  |
++---------------------------------------+
+3.4 Play Time Over Screen (TimeOutLockScreen)
++---------------------------------------+
+|         [● ADB Device Owner]          |
+|                                       |
+|          (Sleeping Mascot &           |
+|           Alarm Clock Art)            |
+|                                       |
+|          Play Time is Over!           |
+|     Time to rest or ask a parent      |
+|            for more time.             |
+|                                       |
+|        [   Parent Unlock   ]          |
++---------------------------------------+
+4. Navigation State Machine & User Flow
+* App Launch / Device Boot (BOOT_COMPLETED): Checks PinSecurityManager.isPinConfigured()
+   * If false -> Routes to Screen 0: Onboarding Wizard -> Saves PIN & initial whitelist -> Routes to Screen 1: Kids Home Launcher.
+   * If true -> Calls LockTaskController.startKiosk() -> Routes directly to Screen 1: Kids Home Launcher.
+* From Screen 1 (Kids Home Launcher):
+   * Tap Whitelisted App (when remainingTime > 0 and not in Bedtime window) -> Launches external app inside LockTask whitelist.
+   * Long-press Lock Icon (2s) -> Opens Screen 2: Parental PIN Modal.
+   * Timer reaches 00:00 or Bedtime starts -> Forces foreground transition to Screen 4: Play Time Over Lockout.
+* From Screen 2 (Parental PIN Modal) on Auth Success:
+   * If triggered from Screen 1 -> Navigates to Screen 3: Parent Dashboard.
+   * If triggered from Screen 4 -> Displays quick actions: Grant +15m Bonus, Grant +30m Bonus, Open Parent Dashboard, or Exit Kiosk.
+5. Design System & Jetpack Compose Theme Tokens
+Token Token Name
+	Value
+	Description / Usage Context
+	KidsBackgroundSurface
+	#E3F2FD
+	Soft Sky Blue background for child-facing sandbox
+	KidsCardPalette
+	#5C9CE6
+#FFD54F
+#66BB6A
+#EC407A
+#AB47BC
+#FFA726
+	Cycled card backgrounds for app shortcuts (Games Blue, Learn Amber, Draw Green, Music Pink, Camera Purple, Books Orange)
+	ParentBackgroundSurface
+	#12161F
+	Deep Slate background for parent administration console
+	ParentCardSurface
+	#1E2430
+	Elevated Slate card surface in Parent Dashboard
+	DeviceOwnerActiveBadge
+	#4CAF50
+	Emerald Green indicator badge for active ADB Device Owner status
+	TimeOutBackground
+	#FFF8E7
+	Warm Cream non-dismissible lockout overlay background
+	PrimaryUnlockCTA
+	#E57373
+	Soft Coral pill button for parent unlock actions
+	KidsAppCardDimens
+	140dp h / 24dp r
+	App card with 140dp height, 24dp corner radius, 56dp internal icon, and 18sp Bold Rounded label
+	KeypadButtonDimens
+	72dp x 72dp
+	Circular numeric keypad touch target with 24sp Medium digits
+	6. Jetpack Compose Component Hierarchy (Implementation Handoff)
+@Composable
+fun KidsLauncherScreen(
+    apps: List<AllowedAppUiModel>,
+    remainingMinutes: Int,
+    batteryLevel: Int,
+    onAppClick: (String) -> Unit,
+    onParentLockLongPress: () -> Unit
+)
+
+@Composable
+fun PinAuthBottomSheet(
+    failedAttempts: Int,
+    lockoutRemainingSeconds: Int,
+    onPinSubmitted: (String) -> Unit,
+    onBiometricClick: () -> Unit,
+    onDismiss: () -> Unit
+)
+
+@Composable
+fun ParentDashboardScreen(
+    isDeviceOwner: Boolean,
+    allApps: List<AppToggleItem>,
+    dailyLimitMinutes: Int,
+    onToggleApp: (String, Boolean) -> Unit,
+    onLimitChange: (Int) -> Unit,
+    onExitKiosk: () -> Unit,
+    onRemoveDeviceOwner: () -> Unit
+)
+
+@Composable
+fun TimeOutLockScreen(
+    isDeviceOwner: Boolean,
+    onParentUnlockClick: () -> Unit
+)
+

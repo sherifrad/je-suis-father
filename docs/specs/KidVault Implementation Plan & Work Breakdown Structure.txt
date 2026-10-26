@@ -1,0 +1,173 @@
+﻿KidVault: Implementation Plan & Work Breakdown Structure (WBS)
+Document Version: 1.0.0 | Phase: 3 (Work Breakdown & Sprint Planning) | Target Device: Honor 400 (MagicOS / Android 10–15)
+|---|Specification](https://docs.google.com/document/d/1g9ZHy2x_p86TpkmsBt0dHx8ERVY8_RKI0hGmoklXRQU/edit)
+1. Milestone & Sprint Roadmap Overview
+Milestone
+	Focus Area
+	Key Deliverables (Files & Modules)
+	Dependencies
+	Acceptance Gate
+	Milestone 1: Project Scaffolding & Security Core
+	Gradle setup, AndroidManifest.xml, PBKDF2 PIN Cryptography, and Biometric Auth.
+	build.gradle.ktsAndroidManifest.xmlPinSecurityManager.ktBiometricAuthHelper.kt
+	None (Foundation)
+	Unit tests pass for PIN salt/hash creation, verification, and 5-attempt brute-force lockout timer.
+	Milestone 2: Local Persistence & Package Discovery
+	Room Database, PackageManager scanner, and App Whitelist Repository.
+	AllowedApp.ktUsageSession.ktKidVaultDatabase.ktAppWhitelistDao.ktInstalledAppScanner.ktAppRepository.kt
+	Milestone 1
+	Queries all launchable apps on Android 11+ (QUERY_ALL_PACKAGES), toggles whitelist flags in Room DB, and emits reactive Flow<List<AllowedApp>>.
+	Milestone 3: Kiosk Lockdown Engine & Device Owner
+	DeviceAdminReceiver, DevicePolicyManager LockTask wrapper, Boot auto-start, and Immersive Window flags.
+	device_admin_sample.xmlKidVaultAdminReceiver.ktLockTaskController.ktBootReceiver.ktImmersiveModeHelper.kt
+	Milestone 2 (needs whitelist Flow to update setLockTaskPackages)
+	Provisioning via adb shell dpm set-device-owner succeeds; notification shade, quick settings, and recents gesture are completely blocked while locked.
+	Milestone 4: Dual-Persona Jetpack Compose UI
+	Material 3 Themes, Onboarding Wizard, Kids Home Grid, PIN Bottom Sheet, and Parent Dashboard.
+	Theme.ktColor.ktOnboardingScreen.ktKidsLauncherScreen.ktPinAuthBottomSheet.ktParentDashboardScreen.ktKidsLauncherActivity.kt
+	Milestones 1, 2, 3
+	2-second long-press on lock icon opens PIN sheet; toggling apps in Parent Dashboard dynamically updates Kids Grid and LockTask packages.
+	Milestone 5: Session Timer, Curfew & Hardware Red-Teaming
+	Foreground countdown timer, Bedtime scheduler, TimeOutLockScreen, and escape-vector testing on Honor 400.
+	SessionTimerService.ktTimeOutLockScreen.ktParentIdleTimeoutTracker.kt
+	Milestone 4
+	Reaching 00:00 while inside an external game forces the phone back to TimeOutLockScreen; rebooting the Honor 400 boots straight back into KidVault Kiosk mode.
+	2. Detailed Work Breakdown Structure (Task-by-Task Execution Order)
+2.1 Milestone 1 Tasks (Scaffolding & Cryptography)
+* Task 1.1: Initialize Android Studio project (com.example.kidvault, minSdk = 29, targetSdk = 35, Kotlin DSL).
+* Task 1.2: Configure app/build.gradle.kts with Jetpack Compose BOM, Room (ksp), androidx.security:security-crypto:1.1.0-alpha06, and androidx.biometric:biometric:1.2.0-alpha05.
+* Task 1.3: Implement PinSecurityManager.kt with 16-byte SecureRandom salt, 10,000-iteration PBKDF2WithHmacSHA256, and lockout timestamp tracking (KEY_LOCKOUT_UNTIL_MS).
+* Task 1.4: Implement BiometricAuthHelper.kt wrapping BiometricPrompt with fallback to the 4-digit PIN pad.
+2.2 Milestone 2 Tasks (Data Layer & Package Manager)
+* Task 2.1: Create Room entities (AllowedApp.kt, UsageSession.kt) and AppWhitelistDao.kt (getAllowedAppsFlow(), upsertApp(), setAppEnabled()).
+* Task 2.2: Implement InstalledAppScanner.kt using PackageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0) and filtering out system settings, installers, and KidVault itself.
+* Task 2.3: Build AppRepository.kt to merge installed system packages with saved Room DB whitelist states and cache app icons to internal storage.
+2.3 Milestone 3 Tasks (Kiosk Lockdown & System Receivers)
+* Task 3.1: Create res/xml/device_admin_sample.xml and register KidVaultAdminReceiver in AndroidManifest.xml with BIND_DEVICE_ADMIN.
+* Task 3.2: Implement LockTaskController.kt to manage dpm.setLockTaskPackages(), dpm.setLockTaskFeatures(adminComponent, LOCK_TASK_FEATURE_NONE), startKiosk(), stopKiosk(), and clearDeviceOwner().
+* Task 3.3: Implement BootReceiver.kt listening for ACTION_BOOT_COMPLETED and ACTION_LOCKED_BOOT_COMPLETED to launch KidsLauncherActivity immediately on startup.
+* Task 3.4: Implement ImmersiveModeHelper.kt using WindowCompat.setDecorFitsSystemWindows(window, false) and WindowInsetsControllerCompat to hide system bars on Honor MagicOS curved edges.
+2.4 Milestone 4 Tasks (Jetpack Compose Screens & Navigation)
+* Task 4.1: Define ChildSandboxTheme (Pastel Sky #E3F2FD surface, 24dp card shapes) and ParentAdminTheme (Dark Slate #12161F surface) in ui/theme/Theme.kt.
+* Task 4.2: Build OnboardingScreen.kt (3-step pager: PIN creation -> Initial app selection -> Default Home Launcher intent & ADB status check).
+* Task 4.3: Build KidsLauncherScreen.kt featuring the top remaining-time pill, 2-column oversized app grid, and 2-second pointer-input long-press detector on the corner Lock button.
+* Task 4.4: Build PinAuthBottomSheet.kt with 4-dot progress indicator, shake animation via Animatable, circular 0–9 keypad, and lockout countdown display.
+* Task 4.5: Build ParentDashboardScreen.kt with ADB Device Owner status card, app search & toggle list, daily time slider, and administrative exit/unregister buttons.
+2.5 Milestone 5 Tasks (Timers, Curfew & Hardware QA)
+* Task 5.1: Implement SessionTimerManager.kt using Kotlin CoroutineScope + Ticker tracking active screen-on foreground time and comparing current local time against the configured bedtime window.
+* Task 5.2: Build TimeOutLockScreen.kt and trigger a FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TOP intent to pull KidsLauncherActivity to the foreground the instant time expires.
+* Task 5.3: Add ParentIdleTimeoutTracker to ParentDashboardScreen so leaving the phone unattended or turning off the screen in Parent Mode automatically re-locks into Kids Mode after 60 seconds.
+* Task 5.4: Execute Red-Team Escape Testing on the Honor 400 (verify notification pull-down block, 3-button/gesture navigation lock, reboot persistence, and in-game ad click interception).
+3. Reference Gradle Configuration (app/build.gradle.kts)
+plugins {
+
+
+    id("com.android.application")
+
+
+    id("org.jetbrains.kotlin.android")
+
+
+    id("com.google.devtools.ksp")
+
+
+}
+
+
+android {
+
+
+    namespace = "com.example.kidvault"
+
+
+    compileSdk = 35
+
+
+    defaultConfig {
+
+
+        applicationId = "com.example.kidvault"
+
+
+        minSdk = 29
+
+
+        targetSdk = 35
+
+
+        versionCode = 1
+
+
+        versionName = "1.0.0"
+
+
+    }
+
+
+    buildFeatures {
+
+
+        compose = true
+
+
+    }
+
+
+    composeOptions {
+
+
+        kotlinCompilerExtensionVersion = "1.5.14"
+
+
+    }
+
+
+}
+
+
+dependencies {
+
+
+    val composeBom = platform("androidx.compose:compose-bom:2024.09.00")
+
+
+    implementation(composeBom)
+
+
+    implementation("androidx.compose.ui:ui")
+
+
+    implementation("androidx.compose.material3:material3")
+
+
+    implementation("androidx.activity:activity-compose:1.9.2")
+
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+
+
+    // Room Local Database
+
+
+    val roomVersion = "2.6.1"
+
+
+    implementation("androidx.room:room-runtime:$roomVersion")
+
+
+    implementation("androidx.room:room-ktx:$roomVersion")
+
+
+    ksp("androidx.room:room-compiler:$roomVersion")
+
+
+    // Encrypted SharedPreferences & Biometrics
+
+
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+
+
+}
