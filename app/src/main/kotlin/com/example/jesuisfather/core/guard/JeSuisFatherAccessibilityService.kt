@@ -1,7 +1,10 @@
 package com.example.jesuisfather.core.guard
 
 import android.accessibilityservice.AccessibilityService
+import android.app.ActivityOptions
+import android.app.PendingIntent
 import android.content.Intent
+import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 import com.example.jesuisfather.MainActivity
 
@@ -48,12 +51,13 @@ class JeSuisFatherAccessibilityService : AccessibilityService() {
         // 1. Intercept Notification Shade / Quick Settings pull-downs
         if (SYSTEM_UI_PACKAGES.contains(packageName)) {
             val className = event.className?.toString().orEmpty()
-            if (className.contains("Notification", ignoreCase = true) ||
-                className.contains("Panel", ignoreCase = true) ||
-                className.contains("Shade", ignoreCase = true) ||
-                className.contains("QuickSettings", ignoreCase = true)
+            if (!className.contains("NavigationBar", ignoreCase = true) &&
+                !className.contains("Keyguard", ignoreCase = true)
             ) {
-                // Immediately collapse by executing BACK global action
+                // Immediately collapse notification shade and panels
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
+                }
                 performGlobalAction(GLOBAL_ACTION_BACK)
             }
             return
@@ -65,23 +69,43 @@ class JeSuisFatherAccessibilityService : AccessibilityService() {
             return
         }
 
-        // 3. Intercept unauthorized user applications
+        // 3. Intercept unauthorized user applications (any app not explicitly whitelisted)
         val permitted = allowedPackages
-        if (permitted.isNotEmpty() && !permitted.contains(packageName)) {
+        if (!permitted.contains(packageName)) {
             pullLauncherToFront()
         }
     }
 
     private fun pullLauncherToFront() {
+        // 1. Immediately trigger HOME action at OS level to dismiss unauthorized window
+        performGlobalAction(GLOBAL_ACTION_HOME)
+
+        // 2. Also bring MainActivity directly to front
         try {
             val intent = Intent(applicationContext, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP or
                         Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            startActivity(intent)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                val options = ActivityOptions.makeBasic().apply {
+                    pendingIntentBackgroundActivityStartMode =
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                }
+                val pendingIntent = PendingIntent.getActivity(
+                    applicationContext,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    options.toBundle()
+                )
+                pendingIntent.send()
+            } else {
+                startActivity(intent)
+            }
         } catch (_: Exception) {
-            performGlobalAction(GLOBAL_ACTION_HOME)
+            // Home action already invoked
         }
     }
 
