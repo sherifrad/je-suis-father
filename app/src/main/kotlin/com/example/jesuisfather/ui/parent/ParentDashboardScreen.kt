@@ -79,6 +79,8 @@ fun ParentDashboardScreen(
     isDeviceOwner: Boolean,
     allApps: List<AllowedApp>,
     dailyLimitMinutes: Int,
+    isBedtimeCurfewEnabled: Boolean = false,
+    onBedtimeCurfewToggle: (Boolean) -> Unit = {},
     protectionMode: ProtectionMode = ProtectionMode.STANDARD,
     onProtectionModeChanged: (ProtectionMode) -> Unit = {},
     onCheckDeviceOwnerStatus: () -> Unit = {},
@@ -479,6 +481,22 @@ fun ParentDashboardScreen(
                                                     ) {
                                                         Text(if (isExecutingShizuku) "Running..." else "⚡ Activate Device Owner", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                                     }
+                                                } else {
+                                                    Button(
+                                                        onClick = {
+                                                            val launchIntent = context.packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api")
+                                                            if (launchIntent != null) {
+                                                                context.startActivity(launchIntent)
+                                                            } else {
+                                                                Toast.makeText(context, "Shizuku app not found", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Text("🚀 Open Shizuku App", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                    }
                                                 }
 
                                                 Button(
@@ -583,6 +601,38 @@ fun ParentDashboardScreen(
                             valueRange = 15f..240f,
                             steps = 14
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "🌙 Bedtime Curfew (20:00 - 07:00)",
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White,
+                                    fontSize = 13.sp
+                                )
+                                Text(
+                                    text = "Lock screen during nighttime hours automatically.",
+                                    color = SubtleTextGrey,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            Switch(
+                                checked = isBedtimeCurfewEnabled,
+                                onCheckedChange = onBedtimeCurfewToggle,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = PrimaryBlue,
+                                    uncheckedThumbColor = SubtleTextGrey,
+                                    uncheckedTrackColor = SwitchUncheckedTrack
+                                )
+                            )
+                        }
                     }
                 }
             }

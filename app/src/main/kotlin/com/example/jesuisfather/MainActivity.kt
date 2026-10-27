@@ -84,6 +84,9 @@ class MainActivity : FragmentActivity() {
                 var isDeviceOwnerState by remember {
                     mutableStateOf(lockTaskController.isDeviceOwner)
                 }
+                var isBedtimeCurfewState by remember {
+                    mutableStateOf(sessionTimer.isBedtimeCurfewEnabled())
+                }
 
                 val allApps by appRepository.observeAllApps().collectAsState(initial = emptyList())
                 val whitelistedApps by appRepository.observeWhitelistedApps().collectAsState(initial = emptyList())
@@ -98,8 +101,8 @@ class MainActivity : FragmentActivity() {
                             showPinModal = false
                             pinErrorMessage = null
                             if (currentScreen == ScreenState.LOCKOUT) {
-                                sessionTimer.grantBonusMinutes(30)
-                                currentScreen = ScreenState.KIDS_SANDBOX
+                                sessionTimer.grantBonusMinutes(60)
+                                currentScreen = ScreenState.PARENT_DASHBOARD
                             } else {
                                 currentScreen = ScreenState.PARENT_DASHBOARD
                             }
@@ -127,15 +130,18 @@ class MainActivity : FragmentActivity() {
                         JeSuisFatherAccessibilityService.allowedPackages = whitelistedApps.map { it.packageName }.toSet()
                         sessionTimer.startTimer()
                         ImmersiveModeHelper.enterImmersiveMode(window)
-                        val packages = whitelistedApps.map { it.packageName }
                         if (currentProtectionMode == ProtectionMode.ENTERPRISE && lockTaskController.isDeviceOwner) {
+                            val packages = whitelistedApps.map { it.packageName }
                             lockTaskController.setupKioskPolicies(packages)
+                            lockTaskController.startKiosk(this@MainActivity)
                         }
-                        lockTaskController.startKiosk(this@MainActivity)
                     } else {
                         JeSuisFatherAccessibilityService.isKidsModeActive = false
                         sessionTimer.pauseTimer()
                         ImmersiveModeHelper.exitImmersiveMode(window)
+                        if (lockTaskController.isDeviceOwner) {
+                            lockTaskController.stopKiosk(this@MainActivity)
+                        }
                     }
                 }
 
@@ -190,7 +196,12 @@ class MainActivity : FragmentActivity() {
                             ParentDashboardScreen(
                                 isDeviceOwner = isDeviceOwnerState,
                                 allApps = allApps,
-                                dailyLimitMinutes = 90,
+                                dailyLimitMinutes = sessionTimer.getDailyLimitMinutes(),
+                                isBedtimeCurfewEnabled = isBedtimeCurfewState,
+                                onBedtimeCurfewToggle = { enabled ->
+                                    isBedtimeCurfewState = enabled
+                                    sessionTimer.setBedtimeCurfewEnabled(enabled)
+                                },
                                 protectionMode = currentProtectionMode,
                                 onProtectionModeChanged = { newMode ->
                                     currentProtectionMode = newMode
@@ -239,8 +250,8 @@ class MainActivity : FragmentActivity() {
                                         showPinModal = false
                                         pinErrorMessage = null
                                         if (currentScreen == ScreenState.LOCKOUT) {
-                                            sessionTimer.grantBonusMinutes(30)
-                                            currentScreen = ScreenState.KIDS_SANDBOX
+                                            sessionTimer.grantBonusMinutes(60)
+                                            currentScreen = ScreenState.PARENT_DASHBOARD
                                         } else {
                                             currentScreen = ScreenState.PARENT_DASHBOARD
                                         }

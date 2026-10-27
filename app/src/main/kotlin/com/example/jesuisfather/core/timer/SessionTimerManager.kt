@@ -27,15 +27,32 @@ class SessionTimerManager(
     private var bonusMinutes = 0
     private var tickerJob: Job? = null
     private var lastTickRealtime = 0L
+    private var isBedtimeCurfewEnabled = false
 
     fun setDailyLimitMinutes(minutes: Int) {
         dailyLimitMinutes = minutes
         updateRemaining()
     }
 
+    fun getDailyLimitMinutes(): Int = dailyLimitMinutes
+
+    fun setBedtimeCurfewEnabled(enabled: Boolean) {
+        isBedtimeCurfewEnabled = enabled
+        updateRemaining()
+    }
+
+    fun isBedtimeCurfewEnabled(): Boolean = isBedtimeCurfewEnabled
+
     fun grantBonusMinutes(minutes: Int) {
         bonusMinutes += minutes
         updateRemaining()
+    }
+
+    fun resetDailyUsage() {
+        bonusMinutes = 0
+        scope.launch {
+            updateRemaining()
+        }
     }
 
     fun startTimer() {
@@ -79,6 +96,7 @@ class SessionTimerManager(
     }
 
     private fun checkBedtime(): Boolean {
+        if (!isBedtimeCurfewEnabled) return false
         return try {
             val now = LocalTime.now()
             // Bedtime: 20:00 to 07:00
