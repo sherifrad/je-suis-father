@@ -16,7 +16,8 @@ import java.time.LocalTime
 class SessionTimerManager(
     private val repository: AppRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-    private var dailyLimitMinutes: Int = 90
+    private var dailyLimitMinutes: Int = 90,
+    initialCurfewEnabled: Boolean = false
 ) {
     private val _remainingMinutes = MutableStateFlow(dailyLimitMinutes)
     val remainingMinutes: StateFlow<Int> = _remainingMinutes.asStateFlow()
@@ -27,7 +28,7 @@ class SessionTimerManager(
     private var bonusMinutes = 0
     private var tickerJob: Job? = null
     private var lastTickRealtime = 0L
-    private var isBedtimeCurfewEnabled = false
+    private var isBedtimeCurfewEnabled = initialCurfewEnabled
 
     fun setDailyLimitMinutes(minutes: Int) {
         dailyLimitMinutes = minutes

@@ -31,6 +31,9 @@ class PinSecurityManager(
         const val KEY_FAILED_ATTEMPTS = "failed_attempts"
         const val KEY_LOCKOUT_UNTIL_MS = "lockout_until_ms"
         const val KEY_PROTECTION_MODE = "protection_mode"
+        const val KEY_DAILY_LIMIT_MINUTES = "daily_limit_minutes"
+        const val KEY_BEDTIME_CURFEW = "bedtime_curfew_enabled"
+        const val DEFAULT_DAILY_LIMIT_MINUTES = 90
 
         const val MAX_FAILED_ATTEMPTS = 5
         const val LOCKOUT_DURATION_MS = 5 * 60 * 1000L // 5 minutes
@@ -156,6 +159,26 @@ class PinSecurityManager(
     fun setProtectionMode(mode: ProtectionMode) {
         prefs.edit()
             .putString(KEY_PROTECTION_MODE, mode.name)
+            .apply()
+    }
+
+    fun getDailyLimitMinutes(): Int {
+        return prefs.getInt(KEY_DAILY_LIMIT_MINUTES, DEFAULT_DAILY_LIMIT_MINUTES)
+    }
+
+    fun setDailyLimitMinutes(minutes: Int) {
+        prefs.edit()
+            .putInt(KEY_DAILY_LIMIT_MINUTES, minutes)
+            .apply()
+    }
+
+    fun isBedtimeCurfewEnabled(): Boolean {
+        return prefs.getBoolean(KEY_BEDTIME_CURFEW, false)
+    }
+
+    fun setBedtimeCurfewEnabled(enabled: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_BEDTIME_CURFEW, enabled)
             .apply()
     }
 }

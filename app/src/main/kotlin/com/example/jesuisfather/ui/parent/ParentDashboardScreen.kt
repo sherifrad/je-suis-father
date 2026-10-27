@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -44,14 +47,17 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.jesuisfather.R
 import com.example.jesuisfather.core.admin.JeSuisFatherAdminReceiver
 import com.example.jesuisfather.core.admin.ProtectionMode
 import com.example.jesuisfather.core.guard.SystemPermissionHelper
@@ -104,6 +110,7 @@ fun ParentDashboardScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     var currentLimit by remember { mutableFloatStateOf(dailyLimitMinutes.toFloat()) }
+    var isAppListExpanded by rememberSaveable { mutableStateOf(false) }
 
     val filteredApps = remember(allApps, searchQuery) {
         if (searchQuery.isBlank()) allApps
@@ -130,6 +137,19 @@ fun ParentDashboardScreen(
                 containerColor = ParentCardSurface
             ),
             actions = {
+                // Shutdown / Turn off app icon button without text label
+                IconButton(
+                    onClick = onExitKiosk,
+                    modifier = Modifier.padding(end = 4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_shutdown),
+                        contentDescription = "Turn off app",
+                        tint = AuthErrorRed,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
                 Button(
                     onClick = onLockAndReturn,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
@@ -487,70 +507,104 @@ fun ParentDashboardScreen(
                 }
             }
 
-            // App Whitelist Search and Header
+            // App Whitelist Collapsible Section
             item {
-                Text(
-                    text = "Whitelisted Applications",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search installed applications...", color = KeypadBorderGrey) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = ParentCardSurface,
-                        unfocusedContainerColor = ParentCardSurface,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    )
-                )
-            }
-
-            // Whitelisted App Items
-            items(filteredApps, key = { it.packageName }) { app ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isAppListExpanded = !isAppListExpanded },
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = ParentCardSurface)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                            .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = app.appName,
-                                fontWeight = FontWeight.SemiBold,
+                                text = "Allowed & Installed Applications",
+                                fontWeight = FontWeight.Bold,
                                 color = Color.White,
                                 fontSize = 14.sp
                             )
+                            val allowedCount = allApps.count { it.isEnabled }
                             Text(
-                                text = app.packageName,
-                                color = KeypadBorderGrey,
-                                fontSize = 11.sp
+                                text = "$allowedCount allowed · ${allApps.size} total installed",
+                                color = SubtleTextGrey,
+                                fontSize = 12.sp
                             )
                         }
-
-                        Switch(
-                            checked = app.isEnabled,
-                            onCheckedChange = { isEnabled ->
-                                onToggleApp(app.packageName, isEnabled)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = PrimaryBlue,
-                                uncheckedThumbColor = SubtleTextGrey,
-                                uncheckedTrackColor = SwitchUncheckedTrack
-                            )
+                        Text(
+                            text = if (isAppListExpanded) "▲ Collapse" else "▼ Expand",
+                            color = AccentBlue,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
                         )
+                    }
+                }
+            }
+
+            if (isAppListExpanded || searchQuery.isNotBlank()) {
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search installed applications...", color = KeypadBorderGrey) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = ParentCardSurface,
+                            unfocusedContainerColor = ParentCardSurface,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                }
+
+                // Whitelisted App Items
+                items(filteredApps, key = { it.packageName }) { app ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = ParentCardSurface)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = app.appName,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    text = app.packageName,
+                                    color = KeypadBorderGrey,
+                                    fontSize = 11.sp
+                                )
+                            }
+
+                            Switch(
+                                checked = app.isEnabled,
+                                onCheckedChange = { isEnabled ->
+                                    onToggleApp(app.packageName, isEnabled)
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = PrimaryBlue,
+                                    uncheckedThumbColor = SubtleTextGrey,
+                                    uncheckedTrackColor = SwitchUncheckedTrack
+                                )
+                            )
+                        }
                     }
                 }
             }

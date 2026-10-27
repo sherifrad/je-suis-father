@@ -63,7 +63,11 @@ class MainActivity : FragmentActivity() {
         val scanner = InstalledAppScanner(context = this)
         appRepository = DefaultAppRepository(dao = dbHelper, scanner = scanner)
         lockTaskController = LockTaskController(context = this)
-        sessionTimer = SessionTimerManager(repository = appRepository)
+        sessionTimer = SessionTimerManager(
+            repository = appRepository,
+            dailyLimitMinutes = pinManager.getDailyLimitMinutes(),
+            initialCurfewEnabled = pinManager.isBedtimeCurfewEnabled()
+        )
 
         setContent {
             JeSuisFatherTheme {
@@ -200,6 +204,7 @@ class MainActivity : FragmentActivity() {
                                 isBedtimeCurfewEnabled = isBedtimeCurfewState,
                                 onBedtimeCurfewToggle = { enabled ->
                                     isBedtimeCurfewState = enabled
+                                    pinManager.setBedtimeCurfewEnabled(enabled)
                                     sessionTimer.setBedtimeCurfewEnabled(enabled)
                                 },
                                 protectionMode = currentProtectionMode,
@@ -216,14 +221,19 @@ class MainActivity : FragmentActivity() {
                                     }
                                 },
                                 onDailyLimitChanged = { minutes ->
+                                    pinManager.setDailyLimitMinutes(minutes)
                                     sessionTimer.setDailyLimitMinutes(minutes)
                                 },
                                 onLockAndReturn = {
                                     currentScreen = ScreenState.KIDS_SANDBOX
                                 },
                                 onExitKiosk = {
-                                    lockTaskController.stopKiosk(this@MainActivity)
-                                    startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+                                    JeSuisFatherAccessibilityService.isKidsModeActive = false
+                                    sessionTimer.pauseTimer()
+                                    if (lockTaskController.isDeviceOwner) {
+                                        lockTaskController.stopKiosk(this@MainActivity)
+                                    }
+                                    finishAffinity()
                                 }
                             )
                         }
